@@ -23,9 +23,14 @@ import {
   productSchema,
 } from "./schemas/productSchema";
 import { CreateOrderController } from "./controllers/order/CreateOrderController";
-import { addItemOrderSchema, createOrderSchema } from "./schemas/orderSchema";
+import {
+  addItemOrderSchema,
+  createOrderSchema,
+  removeItemSchema,
+} from "./schemas/orderSchema";
 import { ListOrderController } from "./controllers/order/ListOrderController";
 import { AddItemController } from "./controllers/order/AddItemController";
+import { RemoveItemController } from "./controllers/order/RemoveItemController";
 
 const router = Router();
 const upload = multer(uploadConfig);
@@ -95,6 +100,13 @@ router.post(
   isAuthenticated,
   validateSchema(addItemOrderSchema),
   new AddItemController().handle,
+);
+
+router.delete(
+  "/order/remove",
+  isAuthenticated,
+  validateSchema(removeItemSchema),
+  new RemoveItemController().handle,
 );
 
 export { router };
