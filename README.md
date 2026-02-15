@@ -12,6 +12,7 @@ Backend API for a pizza restaurant management system, built with **Node.js**, **
 - **jsonwebtoken** – JWT authentication
 - **multer** – file upload handling
 - **cloudinary** – image storage
+- **swagger-ui-express** – API documentation
 - **CORS** – cross-origin requests
 - **dotenv** – environment variables
 
@@ -69,6 +70,21 @@ npm run dev
 
 The server runs at `http://localhost:3333` (or the port set in `PORT` in `.env`).
 
+## API Documentation
+
+Interactive API documentation is available via Swagger UI:
+
+**URL**: `http://localhost:3333/api-docs`
+
+The Swagger UI provides:
+- Complete API reference with all endpoints
+- Request/response schemas
+- Interactive testing (try endpoints directly from the browser)
+- Authentication configuration
+- Example requests and responses
+
+You can also view the OpenAPI specification in the `swagger.yaml` file.
+
 ## Project structure
 
 ```
@@ -95,6 +111,7 @@ pizzaria-api/
 │   │   └── user/            # User services
 │   ├── routes.ts            # API routes
 │   └── server.ts            # Application entry point
+├── swagger.yaml             # OpenAPI/Swagger specification
 ├── package.json
 ├── tsconfig.json
 └── prisma.config.ts
