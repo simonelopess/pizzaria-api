@@ -138,6 +138,11 @@ router.put(
   new FinishOrderController().handle,
 );
 
-router.delete("/order", isAuthenticated, new DeleteOrderController().handle);
+router.delete(
+  "/order",
+  isAuthenticated,
+  validateSchema(deleteOrderSchema),
+  new DeleteOrderController().handle,
+);
 
 export { router };
