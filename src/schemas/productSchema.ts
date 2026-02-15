@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const listProductsByCategorySchema = z.object({
+  query: z.object({
+    category_id: z
+      .string({ message: "O id da categoria é obrigatório" })
+  }),
+});
+
 export const listProductsSchema = z.object({
   query: z.object({
     disabled: z

@@ -14,9 +14,11 @@ import { isAdmin } from "./middlewares/isAdmin";
 import { createCategorySchema } from "./schemas/categorySchema";
 import { CreateProductController } from "./controllers/product/CreateProductController";
 import { DisableProductController } from "./controllers/product/DisableProductController";
+import { ListProductsByCategoryController } from "./controllers/product/ListProductsByCategoryController";
 import { ListProductsController } from "./controllers/product/ListProductsController";
 import {
   deleteProductSchema,
+  listProductsByCategorySchema,
   listProductsSchema,
   productSchema,
 } from "./schemas/productSchema";
@@ -36,14 +38,7 @@ router.post(
 );
 router.post("/me", isAuthenticated, new UserDetailController().handle);
 
-router.get("/category", isAuthenticated, new ListCategoriesController().handle);
-router.post(
-  "/category",
-  isAuthenticated,
-  isAdmin,
-  validateSchema(createCategorySchema),
-  new CreateCategoryController().handle,
-);
+
 
 router.get(
   "/products",
@@ -64,6 +59,24 @@ router.delete(
   "/product",
   isAuthenticated,
   isAdmin,
+  validateSchema(deleteProductSchema),
   new DisableProductController().handle,
+);
+
+
+router.get("/category", isAuthenticated, new ListCategoriesController().handle);
+router.post(
+  "/category",
+  isAuthenticated,
+  isAdmin,
+  validateSchema(createCategorySchema),
+  new CreateCategoryController().handle,
+);
+
+router.get(
+  "/category/product",
+  isAuthenticated,
+  validateSchema(listProductsByCategorySchema),
+  new ListProductsByCategoryController().handle,
 );
 export { router };
