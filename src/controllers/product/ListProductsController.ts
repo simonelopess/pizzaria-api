@@ -7,7 +7,7 @@ class ListProductsController {
 
     const listProductsService = new ListProductsService();
     const products = await listProductsService.execute({
-      disabled: disabled === "true" ? true : false,
+      disabled,
     });
 
     res.json(products);

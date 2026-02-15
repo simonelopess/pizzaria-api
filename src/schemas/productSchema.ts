@@ -8,7 +8,13 @@ export const listProductsSchema = z.object({
       })
       .optional()
       .default("false")
-      .transform((value) => value === "true")
+      .transform((value) => value === "true"),
+  }),
+});
+
+export const deleteProductSchema = z.object({
+  query: z.object({
+    id: z.string({ message: "O id do produto é obrigatório" }),
   }),
 });
 
