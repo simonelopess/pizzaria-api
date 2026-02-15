@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createCategory = z.object({
+export const createCategorySchema = z.object({
   body: z.object({
     name: z
       .string({ message: "O nome da categoria precisa ser um texto" })
