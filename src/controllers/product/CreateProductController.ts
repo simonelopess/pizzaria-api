@@ -12,7 +12,7 @@ class CreateProductController {
     const createProduct = new CreateProductService();
     const product = await createProduct.execute({
       name,
-      price,
+      price: parseInt(price),
       description,
       category_id,
       imageBuffer: req.file.buffer,
