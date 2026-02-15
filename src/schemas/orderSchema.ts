@@ -34,3 +34,10 @@ export const detailOrderSchema = z.object({
       .string({ message: "O id do pedido é obrigatório" })
   }),
 });
+
+export const sendOrderSchema = z.object({
+  body: z.object({
+    order_id: z.string({ message: "O id do pedido deve ser um texto" }).min(1, "O id do pedido é obrigatório"),
+    name: z.string({ message: "O nome do cliente deve ser um texto" }).optional(),
+  }),
+});
