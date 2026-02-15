@@ -61,6 +61,8 @@ Requisição HTTP → Rotas → Middlewares → Controller → Service → Banco
 | **cors**           | ^2.8.5  | Middleware para habilitar CORS               |
 | **dotenv**         | ^17.2.3 | Carregamento de variáveis de ambiente        |
 | **tsx**            | ^4.20.6 | Executor TypeScript para desenvolvimento     |
+| **multer**         | ^2.0.2  | Upload de arquivos (multipart/form-data)     |
+| **cloudinary**     | ^2.9.0  | Upload e armazenamento de imagens na nuvem   |
 
 ### Dependências de Desenvolvimento
 
@@ -70,6 +72,7 @@ Requisição HTTP → Rotas → Middlewares → Controller → Service → Banco
 | **@types/cors**         | ^2.8.19  | Tipos TypeScript para CORS    |
 | **@types/jsonwebtoken** | ^9.0.10  | Tipos TypeScript para JWT     |
 | **@types/node**         | ^24.10.0 | Tipos TypeScript para Node.js |
+| **@types/multer**       | ^2.0.0   | Tipos TypeScript para Multer   |
 | **prisma**              | ^6.19.0  | CLI do Prisma ORM             |
 
 ### Banco de Dados
@@ -92,10 +95,13 @@ backend/
 │   ├── @types/               # Definições de tipos TypeScript customizados
 │   │   └── express/
 │   │       └── index.d.ts    # Extensão de tipos do Express
-│   ├── config/               # Configurações da aplicação
+│   ├── config/               # Configurações (multer, cloudinary, etc.)
 │   ├── controllers/          # Controllers (recebem requisições)
 │   │   ├── category/
-│   │   │   └── CreateCategoryController.ts
+│   │   │   ├── CreateCategoryController.ts
+│   │   │   └── ListCategoriesController.ts
+│   │   ├── product/
+│   │   │   └── CreateProductController.ts
 │   │   └── user/
 │   │       ├── AuthUserController.ts
 │   │       ├── CreateUserController.ts
@@ -111,10 +117,14 @@ backend/
 │   │   └── index.ts
 │   ├── schemas/              # Schemas de validação Zod
 │   │   ├── categorySchema.ts
+│   │   ├── productSchema.ts
 │   │   └── userSchema.ts
 │   ├── services/             # Services (lógica de negócio)
 │   │   ├── category/
-│   │   │   └── CreateCategoryService.ts
+│   │   │   ├── CreateCategoryService.ts
+│   │   │   └── ListCategoriesService.ts
+│   │   ├── product/
+│   │   │   └── CreateProductService.ts
 │   │   └── user/
 │   │       ├── AuthUserService.ts
 │   │       ├── CreateUserService.ts
@@ -388,14 +398,40 @@ Valida criação de categorias:
 ```typescript
 {
   body: {
-    name: string (min: 2 caracteres)
+    name: string (min: 3 caracteres)
   }
 }
 ```
 
 **Mensagens de erro**:
 
-- Nome inválido: "Nome da categoria precisa ter 2 caracteres"
+- Nome inválido: "O nome da categoria precisa ter no mínimo 3 letras"
+
+### Product Schemas (`schemas/productSchema.ts`)
+
+#### **productSchema**
+
+Valida criação de produtos:
+
+```typescript
+{
+  body: {
+    name: string (min: 1 caractere),
+    price: string (obrigatório, numérico),
+    description: string (min: 10 caracteres),
+    category_id: string (obrigatório, UUID da categoria)
+  }
+}
+```
+
+**Mensagens de erro**:
+
+- Nome inválido: "O nome do produto precisa ter no mínimo 1 letra"
+- Preço inválido: "O preço do produto precisa ser maior que 0"
+- Descrição inválida: "A descrição do produto precisa ter no mínimo 10 letras"
+- Categoria: "O id da categoria é obrigatório"
+
+**Observação**: A criação de produto usa `multipart/form-data` (campo `file` para a imagem). O schema valida apenas o body; a imagem é obrigatória e validada no controller.
 
 ---
 
@@ -499,6 +535,44 @@ Authorization: Bearer <token>
 
 ### **Categorias**
 
+#### **GET /category**
+
+Lista todas as categorias cadastradas.
+
+**Middlewares**: `isAuthenticated`
+
+**Permissão**: Qualquer usuário logado (STAFF ou ADMIN)
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
+```
+
+**Resposta de Sucesso (200)**:
+
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Pizzas Doces",
+    "createdAt": "2025-11-11T10:30:00.000Z"
+  },
+  {
+    "id": "uuid",
+    "name": "Pizzas Salgadas",
+    "createdAt": "2025-11-11T10:35:00.000Z"
+  }
+]
+```
+
+**Observações**:
+
+- Retorno ordenado por nome (asc)
+- Campos retornados: `id`, `name`, `createdAt`
+
+---
+
 #### **POST /category**
 
 Cria uma nova categoria de produtos.
@@ -530,6 +604,56 @@ Authorization: Bearer <token>
   "createdAt": "2025-11-11T10:30:00.000Z"
 }
 ```
+
+---
+
+### **Produtos**
+
+#### **POST /product**
+
+Cria um novo produto (pizza) no sistema.
+
+**Middlewares**: `isAuthenticated`, `isAdmin`, `upload.single("file")`, `validateSchema(productSchema)`
+
+**Permissão**: Apenas usuários com role ADMIN
+
+**Headers**:
+
+```
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+```
+
+**Body (multipart/form-data)**:
+
+| Campo         | Tipo   | Obrigatório | Descrição                          |
+| ------------- | ------ | ----------- | ---------------------------------- |
+| `file`        | File   | Sim         | Imagem do produto (banner)         |
+| `name`        | string | Sim         | Nome do produto (mín. 1 caractere)|
+| `price`       | string | Sim         | Preço em centavos (ex: "2990")     |
+| `description` | string | Sim         | Descrição (mín. 10 caracteres)     |
+| `category_id` | string | Sim         | UUID da categoria                  |
+
+**Resposta de Sucesso (200)**:
+
+```json
+{
+  "id": "uuid-gerado",
+  "name": "Pizza Margherita",
+  "price": 2990,
+  "description": "Molho de tomate, mussarela e manjericão fresco",
+  "category_id": "uuid-categoria",
+  "banner": "https://res.cloudinary.com/.../image/upload/...",
+  "createdAt": "2025-11-11T11:00:00.000Z"
+}
+```
+
+**Observações**:
+
+- Preço é armazenado em **centavos** (inteiro)
+- A imagem é enviada para o Cloudinary; a URL retornada é salva em `banner`
+- A categoria deve existir; caso contrário retorna erro "Categoria não encontrada"
+- Se a imagem não for enviada, retorna erro "A imagem do produto é obrigatória"
 
 ---
 
@@ -587,6 +711,46 @@ Authorization: Bearer <token>
    - Criação no banco
    ↓
 6. Resposta HTTP 201
+```
+
+### Fluxo: Listagem de Categorias (usuário logado)
+
+```
+1. GET /category
+   ↓
+2. Middleware: isAuthenticated
+   - Valida token JWT
+   - Adiciona user_id ao req
+   - Se inválido → 401
+   ↓
+3. ListCategoriesController → ListCategoriesService
+   - findMany no Prisma (orderBy name asc)
+   - Retorna array de categorias (id, name, createdAt)
+   ↓
+4. Resposta HTTP 200 com array de categorias
+```
+
+### Fluxo: Criação de Produto (admin + upload)
+
+```
+1. POST /product (multipart/form-data: file + name, price, description, category_id)
+   ↓
+2. Middleware: isAuthenticated → isAdmin
+   ↓
+3. Middleware: upload.single("file")
+   - Multer processa o arquivo (req.file)
+   ↓
+4. Middleware: validateSchema(productSchema)
+   - Valida body (name, price, description, category_id)
+   ↓
+5. CreateProductController
+   - Verifica se req.file existe (senão → erro)
+   - CreateProductService.execute()
+     - Verifica se categoria existe
+     - Upload da imagem no Cloudinary → banner (URL)
+     - Cria produto no banco (price em centavos)
+   ↓
+6. Resposta HTTP 200 com dados do produto
 ```
 
 ---

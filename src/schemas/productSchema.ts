@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+export const listProductsSchema = z.object({
+  query: z.object({
+    disabled: z
+      .enum(["true", "false"], {
+        message: "O parâmetro disabled deve ser 'true' ou 'false'",
+      })
+      .optional()
+      .default("false")
+      .transform((value) => value === "true")
+  }),
+});
+
 export const productSchema = z.object({
   body: z.object({
     name: z
